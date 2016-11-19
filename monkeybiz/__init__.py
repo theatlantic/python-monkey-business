@@ -6,6 +6,8 @@ from types import ModuleType
 import six
 from six.moves import filter
 
+from .classes import patch_class  # noqa
+
 
 try:
     __version__ = pkg_resources.get_distribution('python-monkey-business').version
