@@ -38,17 +38,15 @@ def patch_class(target_cls):
     class_dict = mutable_class_dict(target_cls)
     orig_dict = {}
     patch_attrs = {}
-    new_cls = None
 
     class PatchBase(object):
         pass
 
     # A wrapper around methods so that self.__class__ gets redefined,
     # allowing super() calls to work.
-    def method_wrapper(f):
+    def method_wrapper(f, new_cls):
         @functools.wraps(f)
         def wrapper(self, *args, **kwargs):
-            global new_cls
             if isinstance(f, classmethod) and self is target_cls:
                 return f(new_cls, *args, **kwargs)
             orig_type = type(self)
@@ -59,7 +57,7 @@ def patch_class(target_cls):
     class meta(type(target_cls)):
 
         def __new__(cls, name, bases, attrs):
-            global new_cls
+            method_attrs = {}
 
             for k, v in six.iteritems(attrs):
                 if k in ('__module__', '__doc__'):
@@ -67,12 +65,14 @@ def patch_class(target_cls):
                 if k in class_dict:
                     orig_dict[k] = class_dict[k]
                 if isinstance(v, (types.FunctionType, classmethod)):
-                    v = method_wrapper(v)
+                    method_attrs[k] = v
                 patch_attrs[k] = v
 
             patch_base = type('%sPatch' % name, (PatchBase,), orig_dict)
             bases = (patch_base,) + bases
             new_cls = super(meta, cls).__new__(cls, name, bases, attrs)
+            for k, v in six.iteritems(method_attrs):
+                patch_attrs[k] = method_wrapper(v, new_cls)
             return new_cls
 
         def patch(cls):
