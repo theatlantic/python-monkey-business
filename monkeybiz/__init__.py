@@ -1,16 +1,9 @@
 import functools
 import inspect
-import pkg_resources
 from types import ModuleType
 
 import six
 from six.moves import filter
-
-
-try:
-    __version__ = pkg_resources.get_distribution('python-monkey-business').version
-except pkg_resources.DistributionNotFound:
-    __version__ = None
 
 
 def patch(func=None, obj=None, name=None, avoid_doublewrap=True):
