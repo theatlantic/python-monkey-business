@@ -1,16 +1,18 @@
 import functools
 import inspect
-import pkg_resources
 from types import ModuleType
 
-import six
-from six.moves import filter
-
+import sys
 
 try:
-    __version__ = pkg_resources.get_distribution('python-monkey-business').version
-except pkg_resources.DistributionNotFound:
-    __version__ = None
+    from builtins import filter
+except ImportError:
+    from itertools import ifilter as filter
+
+PY3 = sys.version_info[0] == 3
+
+
+__version__ = "1.0.0"
 
 
 def patch(func=None, obj=None, name=None, avoid_doublewrap=True):
@@ -80,11 +82,11 @@ def patch(func=None, obj=None, name=None, avoid_doublewrap=True):
 
     # get underlying function (if it's an unbound method)
     try:
-        original_callable = six.get_method_function(call)
+        original_callable = getattr(call, "__func__" if PY3 else "im_func")
     except AttributeError:
         original_callable = call
 
-    @six.wraps(func)
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         return func(original_callable, *args, **kwargs)
 
@@ -92,7 +94,7 @@ def patch(func=None, obj=None, name=None, avoid_doublewrap=True):
     wrapper.original = call
     wrapper.wrapper = func
 
-    if six.PY2 and inspect.isclass(obj):
+    if not PY3 and inspect.isclass(obj):
         # rewrap staticmethod and classmethod specifically (iff obj is a class)
         if hasattr(call, 'im_self'):
             if call.im_self:
