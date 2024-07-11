@@ -12,7 +12,7 @@ except ImportError:
 PY3 = sys.version_info[0] == 3
 
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 
 def patch(func=None, obj=None, name=None, avoid_doublewrap=True):
